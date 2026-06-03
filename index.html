@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>✦ Proxy Portal · เชื่อมต่อปลอดภัย</title>
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +29,6 @@
             --toast-bg: #0b1a2f;
             --modal-overlay: rgba(10, 20, 40, 0.7);
             --discord-btn-bg: rgba(88, 101, 242, 0.1);
-            --divider-color: rgba(0,0,0,0.05);
         }
 
         .dark-theme {
@@ -49,7 +47,6 @@
             --toast-bg: #111c2e;
             --modal-overlay: rgba(2, 5, 15, 0.85);
             --discord-btn-bg: rgba(88, 101, 242, 0.2);
-            --divider-color: rgba(255,255,255,0.06);
         }
 
         * {
@@ -199,10 +196,7 @@
             color: #e0f0ff;
             font-weight: 650;
         }
-        .btn-facebook {
-            border-color: #1877f2;
-            color: #2b5ced;
-        }
+        .btn-facebook { border-color: #1877f2; color: #2b5ced; }
         .btn-discord {
             background: var(--discord-btn-bg);
             border-color: #5865f2;
@@ -282,6 +276,7 @@
         }
         .copy-btn-small:active { background: var(--badge-bg); }
 
+        /* ⭐ Modal */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -351,12 +346,11 @@
 </head>
 <body>
 
-<!-- Toggle ธีม -->
 <div class="theme-toggle" id="themeToggle" title="สลับโหมดกลางวัน/กลางคืน">🌓</div>
 
 <div class="card" id="app"></div>
 
-<!-- Modal แจ้งเตือน -->
+<!-- Modal 1: แจ้งเตือน -->
 <div class="modal-overlay" id="warningModal">
     <div class="modal-container">
         <div style="font-size:48px;">🎬</div>
@@ -366,15 +360,14 @@
     </div>
 </div>
 
-<!-- Modal เลือกวิธีการเชื่อมต่อ -->
+<!-- Modal 2: เลือก WiFi / Proxy (แบบเดิม) -->
 <div class="modal-overlay" id="choiceModal">
     <div class="modal-container">
         <div style="font-size:44px;">📡</div>
         <h3 style="margin:12px 0; color:var(--text-primary);">เลือกวิธีการติดตั้ง</h3>
-        <div style="display:flex; flex-direction:column; gap:14px; margin-top:20px;">
-            <button class="btn" id="wifiChoiceBtn" style="border-color:#22c55e; color:#22c55e;">📶 WiFi / เน็ตบ้าน</button>
-            <button class="btn" id="proxyChoiceBtn" style="border-color:#f97316; color:#f97316;">📱 Proxy (เน็ตมือถือ)</button>
-        </div>
+        <p style="color:var(--text-secondary); margin-bottom:16px;">กรุณาเลือกประเภทการเชื่อมต่อที่คุณใช้</p>
+        <button class="btn" id="wifiChoiceBtn" style="border-color:#22c55e; color:#22c55e; margin-bottom:12px; width:100%;">📶 ลงผ่าน WiFi / เน็ตบ้าน</button>
+        <button class="btn" id="proxyChoiceBtn" style="border-color:#f97316; color:#f97316; width:100%;">🔌 ลงผ่าน Proxy pin (เน็ตมือถือ)</button>
     </div>
 </div>
 
@@ -394,21 +387,19 @@
 
 <script>
 (function() {
-    // ---------- ค่าคงที่ ----------
     const ADMIN_SECRET = "admin123";
     const DISCORD_INVITE = "https://discord.gg/xwAqgW5xK";
-    const ACTIVATE_URL = "https://chunchuche.io.vn/v2/activate.php"; // ⭐ เปลี่ยนตรงนี้
+    const ACTIVATE_URL = "https://chunchuche.io.vn/v2/activate.php";
     
-    // คลิปเริ่มต้น
-    let wifiVideoId = localStorage.getItem('proxy_wifi_video_id') || "dQw4w9WgXcQ";
-    let proxyVideoId = localStorage.getItem('proxy_proxy_video_id') || "dQw4w9WgXcQ";
+    // ⭐ คลิป
+    let wifiVideoId = localStorage.getItem('proxy_wifi_video_id') || "QGVIo8TLUIQ";
+    let proxyVideoId = localStorage.getItem('proxy_proxy_video_id') || "Sf5CTnd-PoA";
     
     let selectedMethod = sessionStorage.getItem('proxy_selected_method');
     const urlParams = new URLSearchParams(window.location.search);
     const userKey = urlParams.get("key");
     const isAdmin = urlParams.get("admin") === ADMIN_SECRET;
 
-    // ---------- Utility ----------
     function extractVideoId(url) {
         const patterns = [/youtu\.be\/([a-zA-Z0-9_-]+)/, /[?&]v=([a-zA-Z0-9_-]+)/, /embed\/([a-zA-Z0-9_-]+)/, /^([a-zA-Z0-9_-]{11})$/];
         for (let p of patterns) {
@@ -430,7 +421,7 @@
         }, 2500);
     }
 
-    // Theme Toggle
+    // Theme
     const themeToggle = document.getElementById('themeToggle');
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-theme');
     themeToggle.addEventListener('click', () => {
@@ -438,7 +429,30 @@
         localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
     });
 
-    // ---------- Render หลัก ----------
+    function setSelectedMethod(method) {
+        selectedMethod = method;
+        sessionStorage.setItem('proxy_selected_method', method);
+        updateVideo();
+        document.getElementById('choiceModal').classList.remove('active');
+        showToast(`✅ ${method === 'wifi' ? '📶 โหมด WiFi' : '📱 โหมด Proxy'}`);
+    }
+
+    function updateVideo() {
+        const iframe = document.getElementById('youtubeIframe');
+        if (iframe) iframe.src = `https://www.youtube.com/embed/${selectedMethod === 'proxy' ? proxyVideoId : wifiVideoId}?rel=0`;
+    }
+
+    function generateQRCode() {
+        const container = document.getElementById('qrCodeContainer');
+        container.innerHTML = '';
+        const qr = document.createElement('img');
+        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(DISCORD_INVITE)}`;
+        qr.alt = "Discord QR";
+        qr.style.width = '100%';
+        container.appendChild(qr);
+    }
+
+    // Render
     function renderApp() {
         const container = document.getElementById('app');
         let html = `<div style="text-align:center;"><span class="badge-new">✦ PROXY ACCESS ✦</span></div>
@@ -468,12 +482,9 @@
                 <div class="footer-note">เข้ารหัส · ส่วนตัว · ปลอดภัย</div>`;
         container.innerHTML = html;
 
-        // Event Listeners
+        // Events
         document.getElementById('webPortalBtn')?.addEventListener('click', () => {
-            // ⭐ ใช้ ACTIVATE_URL ตัวแปรใหม่
-            const url = userKey 
-                ? `${ACTIVATE_URL}?key=${encodeURIComponent(userKey)}` 
-                : ACTIVATE_URL;
+            const url = userKey ? `${ACTIVATE_URL}?key=${encodeURIComponent(userKey)}` : ACTIVATE_URL;
             window.open(url, '_blank');
         });
         document.getElementById('facebookBtn')?.addEventListener('click', () => window.open('https://www.facebook.com/share/14bYEXFv1Jd/', '_blank'));
@@ -481,7 +492,9 @@
             document.getElementById('discordModal').classList.add('active');
             generateQRCode();
         });
-        document.getElementById('changeMethodBtn')?.addEventListener('click', () => document.getElementById('choiceModal').classList.add('active'));
+        document.getElementById('changeMethodBtn')?.addEventListener('click', () => {
+            document.getElementById('choiceModal').classList.add('active');
+        });
         document.getElementById('copyKeyBtn')?.addEventListener('click', function() {
             navigator.clipboard.writeText(userKey);
             this.textContent = '✓ คัดลอกแล้ว!';
@@ -506,30 +519,25 @@
         } else showToast('❌ ลิงก์ไม่ถูกต้อง', true);
     }
 
-    function updateVideo() {
-        const iframe = document.getElementById('youtubeIframe');
-        if (iframe) iframe.src = `https://www.youtube.com/embed/${selectedMethod === 'proxy' ? proxyVideoId : wifiVideoId}?rel=0`;
-    }
-
-    function generateQRCode() {
-        const container = document.getElementById('qrCodeContainer');
-        container.innerHTML = '';
-        const qr = document.createElement('img');
-        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(DISCORD_INVITE)}`;
-        qr.alt = "Discord QR";
-        qr.style.width = '100%';
-        container.appendChild(qr);
-    }
-
-    // Modal controls
+    // ⭐ Modal แบบเดิม
     document.getElementById('modalOkBtn').addEventListener('click', () => {
         document.getElementById('warningModal').classList.remove('active');
-        if (!selectedMethod) document.getElementById('choiceModal').classList.add('active');
+        if (!selectedMethod) {
+            document.getElementById('choiceModal').classList.add('active');
+        }
     });
-    document.getElementById('wifiChoiceBtn').addEventListener('click', () => { selectedMethod = 'wifi'; sessionStorage.setItem('proxy_selected_method','wifi'); updateVideo(); document.getElementById('choiceModal').classList.remove('active'); showToast('📶 โหมด WiFi'); });
-    document.getElementById('proxyChoiceBtn').addEventListener('click', () => { selectedMethod = 'proxy'; sessionStorage.setItem('proxy_selected_method','proxy'); updateVideo(); document.getElementById('choiceModal').classList.remove('active'); showToast('📱 โหมด Proxy'); });
+    document.getElementById('wifiChoiceBtn').addEventListener('click', () => setSelectedMethod('wifi'));
+    document.getElementById('proxyChoiceBtn').addEventListener('click', () => setSelectedMethod('proxy'));
+
     document.getElementById('openDiscordBtn').addEventListener('click', () => window.open(DISCORD_INVITE, '_blank'));
     document.getElementById('closeDiscordModal').addEventListener('click', () => document.getElementById('discordModal').classList.remove('active'));
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+    });
 
     // Start
     renderApp();
